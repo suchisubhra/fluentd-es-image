@@ -1,0 +1,89 @@
+{
+  "apiVersion": "extensions/v1beta1",
+  "kind": "DaemonSet",
+  "metadata": {
+    "name": "fluentd",
+    "namespace": "spark-beta",
+    "labels": {
+      "app": "fluentd",
+      "version": "v1"
+    }
+  },
+  "spec": {
+    "template": {
+      "metadata": {
+        "labels": {
+          "name": "fluentd"
+        }
+      },
+      "spec": {
+        "volumes": [
+          {
+            "name": "pos-files",
+            "emptyDir": {}
+          },
+          {
+            "name": "host-logs",
+            "hostPath": {
+              "path": "/var/log/"
+            }
+          },
+          {
+            "name": "docker-logs",
+            "hostPath": {
+              "path": "/var/log/containers"
+            }
+          },
+          {
+            "name": "container-logs",
+            "hostPath": {
+              "path": "/var/lib/docker/containers"
+            }
+          }
+        ],
+        "containers": [
+          {
+            "image": "sparkplatform/fluentd-es-image:2.2",
+            "name": "fluentd",
+            "imagePullPolicy": "Always",
+            "env":[
+              {
+                "name" : "COLLECTOR_URL",
+                "value" : "beta-log.anvil.autodesk.com"
+              },
+              {
+                "name" : "_LOG_LEVEL",
+                "value" : "debug"
+              }
+            ],
+            "securityContext":
+              {
+                 "privileged": true
+              },
+            "volumeMounts": [
+              {
+                "name": "host-logs",
+                "mountPath": "/mnt/log/",
+                "readOnly": true
+              },
+              {
+                "name": "docker-logs",
+                "mountPath": "/var/log/containers",
+                "readOnly": true
+              },
+              {
+                "name": "container-logs",
+                "mountPath": "/var/lib/docker/containers",
+                "readOnly": true
+              },
+              {
+                "name": "pos-files",
+                "mountPath": "/mnt/pos/"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
